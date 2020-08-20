@@ -1,0 +1,14 @@
+---
+micronaut:
+  application:
+    name: omar-lite-wms
+---
+omar:
+    lite:
+      wms:
+        database:
+          name: omardb-prod
+          username: postgres
+          password: postgres
+          host: host.docker.internal
+          port: 5432

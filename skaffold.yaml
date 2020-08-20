@@ -1,0 +1,18 @@
+apiVersion: skaffold/v2beta6
+kind: Config
+metadata:
+  name: omar-lite-wms
+build:
+  artifacts:
+    - image: nexus-docker-public-hosted.ossim.io/omar-lite-wms
+      jib: {}
+  tagPolicy:
+    sha256: {}
+
+deploy:
+  helm:
+    releases:
+      - name: omar-lite-wms
+        chartPath: chart
+        artifactOverrides:
+          image: nexus-docker-public-hosted.ossim.io/omar-lite-wms

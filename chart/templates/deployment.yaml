@@ -1,0 +1,49 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: {{ .Values.global.image.name }}
+          imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 10
+          volumeMounts:
+            - mountPath: /data
+              name: ossim-data
+            # use the following for local deployment:
+#            - mountPath: /System/Volumes/Data/ossim
+#              name: data
+      volumes:
+        # use the following for local deployment:
+ #       - name: ossim-data
+ #         hostPath:
+ #           path: /System/Volumes/Data/ossim
+        # use the following for remote deployment:
+        - name: ossim-data
+          persistentVolumeClaim:
+            claimName: omar-oms-ossim-data-pvc

@@ -1,0 +1,161 @@
+plugins {
+  id "groovy"
+  id "application"
+  id "com.google.cloud.tools.jib" version "2.5.0"
+}
+
+version "0.9"
+group "omar.lite.wms"
+
+repositories {
+  mavenLocal()
+  maven { url 'https://nexus.ossim.io/repository/all-repos' }
+  maven { url 'https://repo.osgeo.org/repository/release/' }
+  maven { url 'https://repo.osgeo.org/repository/snapshot/' }
+  mavenCentral()
+  jcenter()
+}
+
+configurations {
+  // for dependencies that are needed for development only
+  developmentOnly
+}
+
+dependencies {
+
+  compile 'commons-io:commons-io:2.7'
+
+  compile( 'org.geoscript:geoscript-groovy:1.15.0' ) {
+    exclude module: 'gt-swing'
+    exclude module: 'slf4j-log4j12'
+    exclude module: 'gt-render'
+    exclude module: 'gt-shapefile'
+    exclude module: 'gt-jdbc-mysql'
+    exclude module: 'gt-xsd-wfs'
+    exclude module: 'gt-wfs-ng'
+    // exclude module: 'gt-charts'
+    // exclude module: 'gt-brewer'
+    exclude module: 'gt-svg'
+    exclude module: 'gt-property'
+    exclude module: 'gt-geojson'
+    exclude module: 'gt-process'
+    exclude module: 'gt-process-feature'
+    exclude module: 'gt-process-geometry'
+    exclude module: 'gt-xsd-kml'
+    exclude module: 'gt-css'
+    exclude module: 'gt-ysld'
+    exclude module: 'gt-geotiff'
+    exclude module: 'gt-image'
+    exclude module: 'gt-imagemosaic'
+    exclude module: 'gt-arcgrid'
+    exclude module: 'gt-grassraster'
+    exclude module: 'gt-gtopo30'
+    exclude module: 'gt-imagepyramid'
+    exclude module: 'gt-imagepyramid'
+    exclude module: 'gt-imageio-ext-gdal'
+    exclude module: 'gt-netcdf'
+    exclude module: 'gt-process-raster'
+    exclude module: 'gt-wms'
+    exclude module: 'gt-transorm'
+    exclude module: 'gt-mbtiles'
+    exclude module: 'gt-geopkg'
+    exclude module: 'gt-grid'
+    exclude module: 'gt-geobuf'
+    exclude module: 'gt-flatgeobuf'
+    exclude module: 'gt-flatgeobuf'
+    exclude module: 'gt-ogr-jni'
+    exclude module: 'batik-codec'
+    exclude module: 'itext'
+  }
+
+  compile 'org.ossim:joms:1.9.0-SNAPSHOT'
+
+  implementation("io.micronaut.kubernetes:micronaut-kubernetes-discovery-client:2.0.0")
+  compileOnly( platform( "io.micronaut:micronaut-bom:$micronautVersion" ) )
+  compileOnly( "io.micronaut:micronaut-inject-groovy" )
+  implementation( platform( "io.micronaut:micronaut-bom:$micronautVersion" ) )
+  implementation( "io.micronaut:micronaut-inject" )
+  implementation( "io.micronaut:micronaut-validation" )
+  implementation( "io.micronaut.groovy:micronaut-runtime-groovy" )
+  implementation( "io.micronaut:micronaut-http-server-netty" )
+  implementation( "io.micronaut:micronaut-http-client" )
+  implementation( "io.micronaut:micronaut-management" )
+  developmentOnly( "io.micronaut:micronaut-runtime-osx:$micronautVersion" )
+  runtimeOnly( "ch.qos.logback:logback-classic" )
+  testImplementation( enforcedPlatform( "io.micronaut:micronaut-bom:$micronautVersion" ) )
+  testImplementation( "io.micronaut:micronaut-inject-groovy" )
+  testImplementation( "org.spockframework:spock-core" ) {
+    exclude group: "org.codehaus.groovy", module: "groovy-all"
+  }
+  testImplementation( "io.micronaut.test:micronaut-test-spock" )
+}
+
+test.classpath += configurations.developmentOnly
+
+mainClassName = "omar.lite.wms.Application"
+
+// use JUnit 5 platform
+test {
+  useJUnitPlatform()
+}
+
+java {
+  sourceCompatibility = JavaVersion.toVersion( '1.8' )
+  targetCompatibility = JavaVersion.toVersion( '1.8' )
+}
+
+tasks.withType( GroovyCompile ) {
+  groovyOptions.forkOptions.jvmArgs.add( '-Dgroovy.parameters=true' )
+}
+
+
+tasks.withType( JavaExec ) {
+  classpath += configurations.developmentOnly
+  jvmArgs( '-XX:TieredStopAtLevel=1', '-Dcom.sun.management.jmxremote' )
+  if ( gradle.startParameter.continuous ) {
+    systemProperties(
+        'micronaut.io.watch.restart': 'true',
+        'micronaut.io.watch.enabled': 'true',
+        "micronaut.io.watch.paths": "src/main"
+    )
+  }
+}
+
+jib {
+  from {
+//    image = "nexus-docker-public-hosted.ossim.io/omar-micro-runtime:latest"
+    image = 'docker://ossim-alpine-runtime'
+  }
+  to {
+    image =  'nexus-docker-public-hosted.ossim.io/omar-lite-wms'
+    tags = ['latest']
+  }
+  extraDirectories {
+    paths {
+      path {
+        from = file('src/main/jib')
+        into = "/app"
+      }
+      path {
+        from = file('src/main/jib')
+        into = "/app"
+      }
+    }
+    permissions = [
+        "/app/run_java.sh": "755"
+    ]
+  }
+  containerizingMode = 'packaged'
+  container {
+    environment = [
+        JAVA_APP_DIR: '/app',
+        JAVA_MAIN_CLASS: mainClassName,
+        JAVA_CLASSPATH: '/app/classpath/*:/app/libs/*',
+        JAVA_OPTIONS: '-server -Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom'
+    ]
+    ports = ['8080']
+    creationTime = 'USE_CURRENT_TIMESTAMP'
+    entrypoint = ['/app/run_java.sh']
+  }
+}
+

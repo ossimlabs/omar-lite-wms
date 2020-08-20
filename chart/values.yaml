@@ -1,0 +1,5 @@
+---
+global:
+  image:
+    name: nexus-docker-public-hosted.ossim.io/omar-lite-wms
+    pullPolicy: Always
