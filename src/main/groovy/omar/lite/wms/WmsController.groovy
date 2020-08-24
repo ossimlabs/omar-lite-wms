@@ -6,6 +6,8 @@ import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
 import io.micronaut.http.server.types.files.StreamedFile
+import io.micronaut.scheduling.TaskExecutors
+import io.micronaut.scheduling.annotation.ExecuteOn
 import io.reactivex.Single
 
 @CompileStatic
@@ -17,11 +19,14 @@ class WmsController {
     this.webMappingService = webMappingService
   }
 
+  @ExecuteOn( TaskExecutors.IO)
   @Get( uri = "/", produces = [ MediaType.IMAGE_JPEG, MediaType.IMAGE_GIF, MediaType.IMAGE_PNG ] )
-  Single<StreamedFile> index( HttpRequest request ) {
+  //Single<StreamedFile> index( HttpRequest request ) {
+  StreamedFile index( HttpRequest request ) {
     GetMapRequest getMapRequest = new GetMapRequest( request.parameters )
     StreamedFile getMapResponse = webMappingService.getMap( getMapRequest )
 
-    Single.just( getMapResponse )
+    //Single.just( getMapResponse )
+    getMapResponse
   }
 }

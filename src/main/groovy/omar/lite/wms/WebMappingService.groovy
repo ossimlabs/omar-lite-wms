@@ -58,6 +58,7 @@ class WebMappingService {
 
   @Value( '${omar.lite.wms.database.port}' )
   String port
+  PostGIS workspace
 
   StreamedFile getMap( GetMapRequest request ) {
     OutputStream ostream = new FastByteArrayOutputStream()
@@ -106,17 +107,17 @@ class WebMappingService {
 
     long queryStart = System.currentTimeMillis()
 
-    Workspace omardb = new PostGIS( database,
-        user: username,
-        password: password,
-        host: host,
-        port: port?.toInteger()
-    )
+//    Workspace omardb = new PostGIS( database,
+//        user: username,
+//        password: password,
+//        host: host,
+//        port: port?.toInteger()
+//    )
 
     int count = 0
     boolean contained = true
 
-    Workspace.withWorkspace( omardb ) { Workspace workspace ->
+//    Workspace.withWorkspace( omardb ) { Workspace workspace ->
       Layer layer = workspace[ request?.layers?.split( ':' )?.last() ]
       Field geom = layer?.schema?.geom
       List<Double> coords = request?.bbox?.split( ',' )?.collect { it.toDouble() }
@@ -136,9 +137,9 @@ class WebMappingService {
         ++count
 
         contained &= f?.geom?.contains( bbox?.geometry )
-        null
+//        null
       }
-    }
+//    }
 
     long queryStop = System.currentTimeMillis()
 
@@ -247,6 +248,14 @@ class WebMappingService {
     Init.instance().initialize()
 
     Map<String, String> dbParams = [ database: database, username: username, password: password, host: host, port: port ]
+
+     workspace = new PostGIS( database,
+        user: username,
+        password: password,
+        host: host,
+        port: port?.toInteger()
+    )
+
 
     log.info dbParams?.toString()
   }
