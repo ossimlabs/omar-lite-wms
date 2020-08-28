@@ -46,4 +46,4 @@ spec:
         # use the following for remote deployment:
         - name: ossim-data
           persistentVolumeClaim:
-            claimName: omar-oms-ossim-data-pvc
+            claimName: {{ .Values.global.storage.pvc.name }}

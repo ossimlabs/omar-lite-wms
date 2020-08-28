@@ -118,27 +118,27 @@ class WebMappingService {
     boolean contained = true
 
 //    Workspace.withWorkspace( omardb ) { Workspace workspace ->
-      Layer layer = workspace[ request?.layers?.split( ':' )?.last() ]
-      Field geom = layer?.schema?.geom
-      List<Double> coords = request?.bbox?.split( ',' )?.collect { it.toDouble() }
-      Bounds bbox = new Bounds( coords[ 0 ], coords[ 1 ], coords[ 2 ], coords[ 3 ], request?.srs )?.reproject( geom?.proj )
-      Filter filter = Filter.intersects( geom?.name, bbox?.polygon )
+    Layer layer = workspace[ request?.layers?.split( ':' )?.last() ]
+    Field geom = layer?.schema?.geom
+    List<Double> coords = request?.bbox?.split( ',' )?.collect { it.toDouble() }
+    Bounds bbox = new Bounds( coords[ 0 ], coords[ 1 ], coords[ 2 ], coords[ 3 ], request?.srs )?.reproject( geom?.proj )
+    Filter filter = Filter.intersects( geom?.name, bbox?.polygon )
 
-      if ( request?.filter ) {
-        filter = filter?.and( request?.filter )
-      }
+    if ( request?.filter ) {
+      filter = filter?.and( request?.filter )
+    }
 
-      layer?.eachFeature(
-          fields: [ 'filename', 'entry_id', 'ground_geom' ],
-          filter: filter
-      ) { Feature f ->
-        opts[ "image${ count }.file".toString() ] = f[ 'filename' ]?.toString()
-        opts[ "image${ count }.entry".toString() ] = f[ 'entry_id' ]?.toString()
-        ++count
+    layer?.eachFeature(
+        fields: [ 'filename', 'entry_id', 'ground_geom' ],
+        filter: filter
+    ) { Feature f ->
+      opts[ "image${ count }.file".toString() ] = f[ 'filename' ]?.toString()
+      opts[ "image${ count }.entry".toString() ] = f[ 'entry_id' ]?.toString()
+      ++count
 
-        contained &= f?.geom?.contains( bbox?.geometry )
+      contained &= f?.geom?.covers( bbox?.geometry )
 //        null
-      }
+    }
 //    }
 
     long queryStop = System.currentTimeMillis()
@@ -146,6 +146,27 @@ class WebMappingService {
     queryTime = queryStop - queryStart
 
     MediaType mediaType
+    String outputFormat
+
+    switch ( request?.format?.toLowerCase() ) {
+    case 'image/jpeg':
+      mediaType = MediaType.IMAGE_JPEG_TYPE
+      outputFormat = 'jpg'
+      break
+    case 'image/png':
+      mediaType = MediaType.IMAGE_PNG_TYPE
+      outputFormat = 'png'
+      break
+    case 'image/vnd.jpeg-png':
+      if ( contained ) {
+        mediaType = MediaType.IMAGE_JPEG_TYPE
+        outputFormat = 'jpg'
+      } else {
+        mediaType = MediaType.IMAGE_PNG_TYPE
+        outputFormat = 'png'
+      }
+      break
+    }
 
     if ( count ) {
       long chipStart = System.currentTimeMillis()
@@ -170,30 +191,9 @@ class WebMappingService {
               ( 0..<chip.numberOfBands ) as int[] )
 
           Raster raster = Raster.createWritableRaster( sampleModel, dataBuffer, null )
-          ColorSpace colorSpace = ColorSpace.getInstance( ( chip.numberOfBands == 1 ) ? ColorSpace.CS_GRAY : ColorSpace.CS_sRGB )
+          ColorSpace colorSpace = ColorSpace.getInstance( ( raster?.getNumBands() == 1 ) ? ColorSpace.CS_GRAY : ColorSpace.CS_sRGB )
           ColorModel colorModel = new ComponentColorModel( colorSpace, false, false, ComponentColorModel.OPAQUE, dataBuffer.dataType )
           BufferedImage image = new BufferedImage( colorModel, raster, colorModel.isAlphaPremultiplied(), null )
-          String outputFormat
-
-          switch ( request?.format?.toLowerCase() ) {
-          case 'image/jpeg':
-            mediaType = MediaType.IMAGE_JPEG_TYPE
-            outputFormat = 'jpg'
-            break
-          case 'image/png':
-            mediaType = MediaType.IMAGE_PNG_TYPE
-            outputFormat = 'png'
-            break
-          case 'image/vnd.jpeg-png':
-            if ( contained ) {
-              mediaType = MediaType.IMAGE_JPEG_TYPE
-              outputFormat = 'jpg'
-            } else {
-              mediaType = MediaType.IMAGE_PNG_TYPE
-              outputFormat = 'png'
-            }
-            break
-          }
 
           if ( false ) {
             Graphics2D g2d = image.createGraphics()
@@ -228,15 +228,15 @@ class WebMappingService {
 
       chipTime = chipStop - chipStart
     } else {
-      BufferedImage image = new BufferedImage( request?.width, request?.height, BufferedImage.TYPE_INT_RGB )
-      String outputFormat = 'jpeg'
+      BufferedImage image = new BufferedImage( request?.width, request?.height, BufferedImage.TYPE_INT_ARGB )
 
-      mediaType = MediaType.IMAGE_JPEG_TYPE
+      mediaType = MediaType.IMAGE_PNG_TYPE
+      outputFormat = 'png'
       ImageIO.write( image, outputFormat, new BufferedOutputStream( ostream ) )
       log.info( "Error: returning blank tile: ${ opts }" )
     }
 
-    log.info "${ [ request: request, query: queryTime, chip: chipTime, render: renderTime ] }"
+    log.info "${ [ query: queryTime, chip: chipTime, render: renderTime, contained: contained, outputFormat: outputFormat /*, request: request */ ] }"
 
     new StreamedFile( new BufferedInputStream( ostream?.toInputStream() ), mediaType )
   }
@@ -249,7 +249,7 @@ class WebMappingService {
 
     Map<String, String> dbParams = [ database: database, username: username, password: password, host: host, port: port ]
 
-     workspace = new PostGIS( database,
+    workspace = new PostGIS( database,
         user: username,
         password: password,
         host: host,

@@ -2,9 +2,10 @@ plugins {
   id "groovy"
   id "application"
   id "com.google.cloud.tools.jib" version "2.5.0"
+  id "com.github.ben-manes.versions" version "0.29.0"
 }
 
-version "0.10"
+version projectVersion
 group "omar.lite.wms"
 
 repositories {
