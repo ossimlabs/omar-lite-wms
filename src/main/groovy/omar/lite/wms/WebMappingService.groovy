@@ -18,6 +18,7 @@ import io.micronaut.scheduling.annotation.Async
 import joms.oms.Chipper
 import joms.oms.ImageUtil
 import joms.oms.Init
+import joms.oms.NativeChipper
 import joms.oms.ossimImageDataRefPtr
 import joms.oms.ossimInterleaveType
 import org.apache.commons.io.output.ByteArrayOutputStream as FastByteArrayOutputStream
@@ -37,6 +38,7 @@ import java.awt.image.DataBuffer
 import java.awt.image.PixelInterleavedSampleModel
 import java.awt.image.Raster
 import java.awt.image.SampleModel
+import java.awt.image.WritableRaster
 
 @CompileStatic
 @Singleton
@@ -58,7 +60,9 @@ class WebMappingService {
 
   @Value( '${omar.lite.wms.database.port}' )
   String port
+
   PostGIS workspace
+  NativeChipper chipper = new NativeChipper()
 
   StreamedFile getMap( GetMapRequest request ) {
     OutputStream ostream = new FastByteArrayOutputStream()
@@ -170,62 +174,31 @@ class WebMappingService {
 
     if ( count ) {
       long chipStart = System.currentTimeMillis()
-      Chipper chipper = new Chipper()
-
-      //log.info opts?.toString()
-
-      if ( chipper.initialize( opts ) ) {
-        //println  'initialized'
-        ossimImageDataRefPtr chip = chipper.getChip( opts )
-
-        if ( chip && chip.valid() ) {
-          long renderStart = System.currentTimeMillis()
-          DataBuffer dataBuffer = new ImageDataBuffer( chip, ossimInterleaveType.OSSIM_BIP )?.dataBuffer
-          int width = chip?.width?.toInteger()
-          int height = chip?.height?.toInteger()
-          int pixelStride = chip?.numberOfBands.toInteger()
-          int scanlineStride = pixelStride * width
-
-          SampleModel sampleModel = new PixelInterleavedSampleModel( dataBuffer.dataType,
-              width, height, pixelStride, scanlineStride,
-              ( 0..<chip.numberOfBands ) as int[] )
-
-          Raster raster = Raster.createWritableRaster( sampleModel, dataBuffer, null )
-          ColorSpace colorSpace = ColorSpace.getInstance( ( raster?.getNumBands() == 1 ) ? ColorSpace.CS_GRAY : ColorSpace.CS_sRGB )
-          ColorModel colorModel = new ComponentColorModel( colorSpace, false, false, ComponentColorModel.OPAQUE, dataBuffer.dataType )
-          BufferedImage image = new BufferedImage( colorModel, raster, colorModel.isAlphaPremultiplied(), null )
-
-          if ( false ) {
-            Graphics2D g2d = image.createGraphics()
-            g2d.color = Color.red
-            g2d.drawRect( 0, 0, 255, 255 )
-            g2d.dispose()
-          }
-
-          if ( outputFormat == 'png' && request.transparent ) {
-//            log.info "transparency fix"
-            image = TransparentFilter.fixTransparency( transparentFilter, image )
-          }
-
-          ImageIO.write( image, outputFormat, new BufferedOutputStream( ostream ) )
-
-          long renderStop = System.currentTimeMillis()
-
-          renderTime = renderStop - renderStart
-          chip?.delete()
-          chip = null
-        } else {
-          log.error 'Error: invalid chip'
-        }
-      } else {
-        log.error "Error: initializing: ${ opts }"
-      }
-
-      chipper.delete()
-      chipper = null
-
+      WritableRaster raster = chipper?.run( opts )
       long chipStop = System.currentTimeMillis()
 
+      long renderStart = System.currentTimeMillis()
+      ColorSpace colorSpace = ColorSpace.getInstance( ( raster?.getNumBands() == 1 ) ? ColorSpace.CS_GRAY : ColorSpace.CS_sRGB )
+      ColorModel colorModel = new ComponentColorModel( colorSpace, false, false, ComponentColorModel.OPAQUE, raster?.dataBuffer.dataType )
+      BufferedImage image = new BufferedImage( colorModel, raster, colorModel?.isAlphaPremultiplied(), [ : ] as Hashtable )
+
+      if ( false ) {
+        Graphics2D g2d = image.createGraphics()
+        g2d.color = Color.red
+        g2d.drawRect( 0, 0, 255, 255 )
+        g2d.dispose()
+      }
+
+      if ( outputFormat == 'png' && request.transparent ) {
+//            log.info "transparency fix"
+        image = TransparentFilter.fixTransparency( transparentFilter, image )
+      }
+
+      ImageIO.write( image, outputFormat, new BufferedOutputStream( ostream ) )
+
+      long renderStop = System.currentTimeMillis()
+
+      renderTime = renderStop - renderStart
       chipTime = chipStop - chipStart
     } else {
       BufferedImage image = new BufferedImage( request?.width, request?.height, BufferedImage.TYPE_INT_ARGB )
@@ -233,7 +206,7 @@ class WebMappingService {
       mediaType = MediaType.IMAGE_PNG_TYPE
       outputFormat = 'png'
       ImageIO.write( image, outputFormat, new BufferedOutputStream( ostream ) )
-      log.info( "Error: returning blank tile: ${ opts }" )
+      log.info( "Returning blank tile: ${ opts }" )
     }
 
     log.info "${ [ query: queryTime, chip: chipTime, render: renderTime, contained: contained, outputFormat: outputFormat /*, request: request */ ] }"
@@ -256,7 +229,7 @@ class WebMappingService {
         port: port?.toInteger()
     )
 
-
+    ImageIO.useCache = false
     log.info dbParams?.toString()
   }
 }

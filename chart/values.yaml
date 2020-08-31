@@ -3,6 +3,7 @@ global:
   image:
     name: nexus-docker-public-hosted.ossim.io/omar-lite-wms
     pullPolicy: Always
+  replicas: 5
   storage:
     pvc:
       name: omar-oms-ossim-data-pvc
@@ -16,3 +17,10 @@ global:
     password: vME7B9RWivNqBkgfz5N9
     host: gsp-dev-omar.cfussmnw2zzg.us-east-1.rds.amazonaws.com
     port: 5432
+  resources:
+    limits:
+      cpu: 3000m
+      memory: 3000Mi
+    requests:
+      cpu: 500m
+      memory: 500Mi

@@ -21,12 +21,12 @@ class WmsController {
 
   @ExecuteOn( TaskExecutors.IO)
   @Get( uri = "/", produces = [ MediaType.IMAGE_JPEG, MediaType.IMAGE_GIF, MediaType.IMAGE_PNG ] )
-  Single<StreamedFile> index( HttpRequest request ) {
-  //StreamedFile index( HttpRequest request ) {
+  //Single<StreamedFile> index( HttpRequest request ) {
+  StreamedFile index( HttpRequest request ) {
     GetMapRequest getMapRequest = new GetMapRequest( request.parameters )
     StreamedFile getMapResponse = webMappingService.getMap( getMapRequest )
 
-    Single.just( getMapResponse )
-    //getMapResponse
+    //Single.just( getMapResponse )
+    getMapResponse
   }
 }

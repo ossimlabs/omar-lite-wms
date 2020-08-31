@@ -125,7 +125,7 @@ tasks.withType( JavaExec ) {
 jib {
   from {
 //    image = "nexus-docker-public-hosted.ossim.io/omar-micro-runtime:latest"
-    image = 'docker://ossim-alpine-runtime'
+    image = 'docker://ossim-runtime-alpine'
   }
   to {
     image =  'nexus-docker-public-hosted.ossim.io/omar-lite-wms'
@@ -152,7 +152,7 @@ jib {
         JAVA_APP_DIR: '/app',
         JAVA_MAIN_CLASS: mainClassName,
         JAVA_CLASSPATH: '/app/classpath/*:/app/libs/*',
-        JAVA_OPTIONS: '-server -Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom'
+        JAVA_OPTIONS: '-server -Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom -XshowSettings:vm -XX:+UseStringDeduplication '
     ]
     ports = ['8080']
     creationTime = 'USE_CURRENT_TIMESTAMP'
