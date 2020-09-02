@@ -22,10 +22,10 @@ spec:
               containerPort: 8080
           resources:
             limits:
-              cpu: {{ .Values.global.resources.limits.cpu }}
+#              cpu: {{ .Values.global.resources.limits.cpu }}
               memory: {{ .Values.global.resources.limits.memory }}
             requests:
-              cpu: {{ .Values.global.resources.requests.cpu }}
+#              cpu: {{ .Values.global.resources.requests.cpu }}
               memory: {{ .Values.global.resources.requests.memory }}
           readinessProbe:
             httpGet:

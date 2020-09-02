@@ -28,9 +28,11 @@ import org.slf4j.LoggerFactory
 
 import javax.imageio.ImageIO
 import javax.inject.Singleton
+import javax.media.jai.PlanarImage
 import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.color.ColorSpace
+import java.awt.geom.AffineTransform
 import java.awt.image.BufferedImage
 import java.awt.image.ColorModel
 import java.awt.image.ComponentColorModel
@@ -74,7 +76,7 @@ class WebMappingService {
         cut_width        : request?.width?.toString(),
         cut_wms_bbox     : request?.bbox,
         srs              : request?.srs,
-        output_radiometry: 'U8'
+        output_radiometry: 'U8',
     ]
 
     String styles = request?.styles?.trim()
@@ -177,9 +179,17 @@ class WebMappingService {
       WritableRaster raster = chipper?.run( opts )
       long chipStop = System.currentTimeMillis()
 
+      log.info "dataBuffer: ${raster?.dataBuffer}"
+
       long renderStart = System.currentTimeMillis()
-      ColorSpace colorSpace = ColorSpace.getInstance( ( raster?.getNumBands() == 1 ) ? ColorSpace.CS_GRAY : ColorSpace.CS_sRGB )
-      ColorModel colorModel = new ComponentColorModel( colorSpace, false, false, ComponentColorModel.OPAQUE, raster?.dataBuffer.dataType )
+//      ColorSpace colorSpace = ColorSpace.getInstance( ( raster?.getNumBands() == 1 ) ? ColorSpace.CS_GRAY : ColorSpace.CS_sRGB )
+//      ColorModel colorModel = new ComponentColorModel( colorSpace, false, false, ComponentColorModel.OPAQUE, raster?.dataBuffer.dataType )
+
+      ColorModel colorModel = PlanarImage.createColorModel( raster?.sampleModel )
+
+      log.info "raster: ${raster}"
+      log.info "colorModel: ${colorModel}"
+
       BufferedImage image = new BufferedImage( colorModel, raster, colorModel?.isAlphaPremultiplied(), [ : ] as Hashtable )
 
       if ( false ) {
