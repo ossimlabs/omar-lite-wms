@@ -24,7 +24,7 @@ class GetMapRequest {
 
   GetMapRequest( HttpParameters parameters ) {
     parameters.forEach ( String key, List<String> values ) -> {
-      switch ( key ) {
+      switch ( key?.toUpperCase() ) {
       case 'FILTER':
         filter = values?.first()
         break
@@ -46,6 +46,7 @@ class GetMapRequest {
       case 'REQUEST':
         request = values?.first()
         break
+      case 'CRS':
       case 'SRS':
         srs = values?.first()
         break
