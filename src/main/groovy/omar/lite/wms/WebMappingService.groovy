@@ -5,41 +5,37 @@ import geoscript.feature.Field
 import geoscript.filter.Filter
 import geoscript.geom.Bounds
 import geoscript.layer.Layer
+import geoscript.proj.Projection
 import geoscript.workspace.PostGIS
-import geoscript.workspace.Workspace
+
 import groovy.json.JsonSlurper
 import groovy.transform.CompileStatic
+
 import io.micronaut.context.annotation.Value
 import io.micronaut.http.MediaType
 import io.micronaut.http.server.types.files.StreamedFile
 import io.micronaut.runtime.event.annotation.EventListener
 import io.micronaut.runtime.server.event.ServerStartupEvent
 import io.micronaut.scheduling.annotation.Async
-import joms.oms.Chipper
-import joms.oms.ImageUtil
+
 import joms.oms.Init
 import joms.oms.NativeChipper
-import joms.oms.ossimImageDataRefPtr
-import joms.oms.ossimInterleaveType
-import org.apache.commons.io.output.ByteArrayOutputStream as FastByteArrayOutputStream
+import org.geotools.referencing.util.CRSUtilities
 import org.ossim.oms.util.TransparentFilter
+
+import org.apache.commons.io.output.ByteArrayOutputStream as FastByteArrayOutputStream
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import javax.imageio.ImageIO
 import javax.inject.Singleton
 import javax.media.jai.PlanarImage
+import java.awt.AlphaComposite
 import java.awt.Color
 import java.awt.Graphics2D
-import java.awt.color.ColorSpace
 import java.awt.geom.AffineTransform
 import java.awt.image.BufferedImage
 import java.awt.image.ColorModel
-import java.awt.image.ComponentColorModel
-import java.awt.image.DataBuffer
-import java.awt.image.PixelInterleavedSampleModel
-import java.awt.image.Raster
-import java.awt.image.SampleModel
 import java.awt.image.WritableRaster
 
 @CompileStatic
@@ -90,7 +86,7 @@ class WebMappingService {
           opts[ 'hist_center_clip' ] = v?.toString()
           break
         case 'histCenterTile':
-          opts[ 'hist_center_tile' ] = v?.toString()
+          opts[ 'hist_center' ] = v?.toString()
           break
         case 'histLinearNormClip':
           opts[ 'hist_linear_norm_clip' ] = v?.toString()
@@ -112,22 +108,20 @@ class WebMappingService {
     }
 
     long queryStart = System.currentTimeMillis()
-
-//    Workspace omardb = new PostGIS( database,
-//        user: username,
-//        password: password,
-//        host: host,
-//        port: port?.toInteger()
-//    )
-
     int count = 0
     boolean contained = true
 
-//    Workspace.withWorkspace( omardb ) { Workspace workspace ->
     Layer layer = workspace[ request?.layers?.split( ':' )?.last() ]
     Field geom = layer?.schema?.geom
     List<Double> coords = request?.bbox?.split( ',' )?.collect { it.toDouble() }
-    Bounds bbox = new Bounds( coords[ 0 ], coords[ 1 ], coords[ 2 ], coords[ 3 ], request?.srs )?.reproject( geom?.proj )
+    Projection proj = new Projection( request?.srs )
+
+    if ( request?.version == '1.3.0'
+        && CRSUtilities.getUnit( proj?.crs?.coordinateSystem )?.toString() == '\u00b0' ) {
+      coords = [ coords[ 1 ], coords[ 0 ], coords[ 3 ], coords[ 2 ] ]
+    }
+
+    Bounds bbox = new Bounds( coords[ 0 ], coords[ 1 ], coords[ 2 ], coords[ 3 ], proj )?.reproject( geom?.proj )
     Filter filter = Filter.intersects( geom?.name, bbox?.polygon )
 
     if ( request?.filter ) {
@@ -143,9 +137,7 @@ class WebMappingService {
       ++count
 
       contained &= f?.geom?.covers( bbox?.geometry )
-//        null
     }
-//    }
 
     long queryStop = System.currentTimeMillis()
 
@@ -179,17 +171,10 @@ class WebMappingService {
       WritableRaster raster = chipper?.run( opts )
       long chipStop = System.currentTimeMillis()
 
-      log.info "dataBuffer: ${raster?.dataBuffer}"
+      chipTime = chipStop - chipStart
 
       long renderStart = System.currentTimeMillis()
-//      ColorSpace colorSpace = ColorSpace.getInstance( ( raster?.getNumBands() == 1 ) ? ColorSpace.CS_GRAY : ColorSpace.CS_sRGB )
-//      ColorModel colorModel = new ComponentColorModel( colorSpace, false, false, ComponentColorModel.OPAQUE, raster?.dataBuffer.dataType )
-
       ColorModel colorModel = PlanarImage.createColorModel( raster?.sampleModel )
-
-      log.info "raster: ${raster}"
-      log.info "colorModel: ${colorModel}"
-
       BufferedImage image = new BufferedImage( colorModel, raster, colorModel?.isAlphaPremultiplied(), [ : ] as Hashtable )
 
       if ( false ) {
@@ -200,8 +185,12 @@ class WebMappingService {
       }
 
       if ( outputFormat == 'png' && request.transparent ) {
-//            log.info "transparency fix"
-        image = TransparentFilter.fixTransparency( transparentFilter, image )
+        BufferedImage image1 = new BufferedImage( image.width, image.height, BufferedImage.TYPE_INT_ARGB )
+        Graphics2D graphics2D = image1.createGraphics()
+
+        graphics2D.drawRenderedImage( image, new AffineTransform() )
+        graphics2D.dispose()
+        image = TransparentFilter.fixTransparency( transparentFilter, image1 )
       }
 
       ImageIO.write( image, outputFormat, new BufferedOutputStream( ostream ) )
@@ -209,7 +198,6 @@ class WebMappingService {
       long renderStop = System.currentTimeMillis()
 
       renderTime = renderStop - renderStart
-      chipTime = chipStop - chipStart
     } else {
       BufferedImage image = new BufferedImage( request?.width, request?.height, BufferedImage.TYPE_INT_ARGB )
 
@@ -219,7 +207,14 @@ class WebMappingService {
       log.info( "Returning blank tile: ${ opts }" )
     }
 
-    log.info "${ [ query: queryTime, chip: chipTime, render: renderTime, contained: contained, outputFormat: outputFormat /*, request: request */ ] }"
+    log.info "${ [
+        query       : queryTime,
+        chip        : chipTime,
+        render      : renderTime,
+        contained   : contained,
+        outputFormat: outputFormat
+        /*, request: request */
+    ] }"
 
     new StreamedFile( new BufferedInputStream( ostream?.toInputStream() ), mediaType )
   }
