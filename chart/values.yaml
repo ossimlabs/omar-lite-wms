@@ -20,7 +20,7 @@ global:
   resources:
     limits:
       cpu: 3000m
-      memory: 1.5Gi
+      memory: 2Gi
     requests:
       cpu: 1000m
-      memory: 500Mi
+      memory: 1Gi
