@@ -1,0 +1,34 @@
+{
+    "info": {
+      "title": "Test Parameters",
+      "format": {
+        "name": {
+          "method": ["get", "post", "delete", "etc..."],
+          "endpoint": "/controller/endpoint",
+          "in": ["query", "body"],
+          "parameters": [{"parameterName1": "value1", "parameterName2": "value2"}, { "body": {} }]
+        }
+      }
+    },
+    "tests": {
+      "getMap": {
+        "method": "get",
+        "endpoint": "/wms",
+        "in": "query",
+        "parameters": {
+          "SERVICE": "WMS",
+          "VERSION": "1.1.1",
+          "REQUEST": "GetMap",
+          "FORMAT":"image%2Fjpeg",
+          "TRANSPARENT":"true",
+          "STYLES":"",
+          "WIDTH": "256",
+          "HEIGHT": "256",
+          "SRS":"epsg%3A4326",
+          "BBOX":"43.60198974609375%2C-6.7620849609375%2C-43.5992431640625%2C-6.75933837890625",
+          "LAYERS": "omar%3Araster_entry",
+          "FILTER":"in(65623)"
+        }
+      }
+    }
+  }
