@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: omar-lite-wms
+  labels:
+    app: omar-lite-wms
+data:
+  application.yaml: |-
+    omar:
+      lite:
+        wms:
+          database:
+            name: {{ .Values.global.database.name }}
+            username: {{ .Values.global.database.username }}
+            password: {{ .Values.global.database.password }}
+            host: {{ .Values.global.database.host }}
+            port: {{ .Values.global.database.port }}
+

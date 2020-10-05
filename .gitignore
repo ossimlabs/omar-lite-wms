@@ -11,4 +11,3 @@ out/
 .project
 .settings
 .classpath
-chart/templates/configmap.yaml
