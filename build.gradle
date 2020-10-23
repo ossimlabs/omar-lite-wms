@@ -113,7 +113,6 @@ tasks.withType( GroovyCompile ) {
   groovyOptions.forkOptions.jvmArgs.add('-Dmicronaut.openapi.views.spec=redoc.enabled=true,rapidoc.enabled=true,swagger-ui.enabled=true,swagger-ui.theme=flattop')
 }
 
-
 tasks.withType( JavaExec ) {
   classpath += configurations.developmentOnly
   jvmArgs( '-XX:TieredStopAtLevel=1', '-Dcom.sun.management.jmxremote' )
