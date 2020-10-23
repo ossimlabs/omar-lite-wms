@@ -1,6 +1,7 @@
 package omar.lite.wms
 
 import groovy.transform.CompileStatic
+import groovy.transform.MapConstructor
 import groovy.transform.ToString
 import io.micronaut.core.annotation.Introspected
 import io.micronaut.http.HttpParameters
@@ -8,6 +9,7 @@ import io.micronaut.http.HttpParameters
 @ToString( includeNames = true )
 @CompileStatic
 @Introspected
+@MapConstructor
 class GetMapRequest {
   String service
   String version

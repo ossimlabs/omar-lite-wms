@@ -207,14 +207,14 @@ class WebMappingService {
       log.info( "Returning blank tile: ${ opts }" )
     }
 
-    log.info "${ [
+    log.info """${ [
         query       : queryTime,
         chip        : chipTime,
         render      : renderTime,
         contained   : contained,
         outputFormat: outputFormat
         /*, request: request */
-    ] }"
+    ] }"""
 
     new StreamedFile( new BufferedInputStream( ostream?.toInputStream() ), mediaType )
   }
