@@ -1,26 +1,69 @@
----
+# Default values for chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+
+# This values file is used to support the 3pa parent chart
+# deployment. Check that chart to modify these values.
+
+replicas: 5
+
+appName: omar-lite-wms
+
 global:
-  image:
-    name: nexus-docker-public-hosted.ossim.io/omar-lite-wms
-    pullPolicy: Always
-  replicas: 5
-  storage:
-    pvc:
-      name: omar-oms-ossim-data-pvc
-  namespace: omar-dev
-  ingress:
-    host: omar-lite-wms.ossim.io
-    loadBalancer: aaac6bc42260c4b60a9e580e4febc19f-e69fe95399e829a2.elb.us-east-1.amazonaws.com
-  database:
-    name: o2_omar_db
-    username: postgres
-    password: vME7B9RWivNqBkgfz5N9
-    host: gsp-dev-omar.cfussmnw2zzg.us-east-1.rds.amazonaws.com
-    port: 5432
-  resources:
-    limits:
-      cpu: 3000m
-      memory: 2Gi
-    requests:
-      cpu: 1000m
-      memory: 1Gi
+  dockerRepository: nexus-docker-public-hosted.ossim.io
+  imagePullSecret:
+    registry: null
+    username: null
+    password: null
+  hostname: omar-dev.ossim.io
+
+  omarDb:
+    name: null
+    host: null
+    user: null
+    password: null
+    port: null
+
+  createIngress: true
+  useTls: false
+  useTLSClientAuth: false
+  sslCertSecretName: null
+  authSslCertSecretName: null
+
+  createImagePullSecret: true
+  useImagePullSecret: true
+
+  createHpa: true
+  createPVs: true
+  useSpringConfigServer: false
+
+image:
+  name: omar-lite-wms
+  tag: null
+  pullPolicy: null
+
+
+ingressPath: /omar-wms-test
+internalPort: 8080
+externalPort: 8080
+
+readinessProbe:
+  path: /health
+  port: 8080
+  initialDelaySeconds: 5
+  timeoutSeconds: 3
+livenessProbe:
+  path: /health
+  port: 8080
+  initialDelaySeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 10
+
+resources:
+  limits:
+    cpu: 3000m
+    memory: 2Gi
+  requests:
+    cpu: 1000m
+    memory: 1Gi
