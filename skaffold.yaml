@@ -1,14 +1,13 @@
-apiVersion: skaffold/v2beta6
+apiVersion: skaffold/v2beta7
 kind: Config
 metadata:
   name: omar-lite-wms-test
 build:
   artifacts:
-    - image: nexus-docker-public-hosted.ossim.io/omar-lite-wms
-      jib: {}
+  - image: nexus-docker-public-hosted.ossim.io/omar-lite-wms
+    jib: {}
   tagPolicy:
     sha256: {}
-
 deploy:
   helm:
     releases:
@@ -21,4 +20,4 @@ deploy:
       # If you want to use an existing image rather than skaffold's
       # comment this out and specify the image in the values-dev.yaml
       artifactOverrides:
-        imageSkaffoldOverride: nexus-docker-public-hosted.ossim.io/omar-lite-wms             
+        imageSkaffoldOverride: nexus-docker-public-hosted.ossim.io/omar-lite-wms 
