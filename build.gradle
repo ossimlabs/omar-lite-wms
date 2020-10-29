@@ -131,7 +131,7 @@ jib {
     image = 'docker://ossim-runtime-alpine'
   }
   to {
-    image = "nexus-docker-public-hosted.ossim.io/omar-lite-wms${env.}"
+    image = "nexus-docker-public-hosted.ossim.io/omar-lite-wms"
     tags = [ 'latest' ]
   }
   extraDirectories {
