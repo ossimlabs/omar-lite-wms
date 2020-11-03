@@ -30,7 +30,7 @@ spec:
             successThreshold: {{ .Values.livenessProbe.successThreshold }}
             timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
             httpGet:
-              path: {{ .Values.livenessProbe.path }}
+              path: {{ .Values.ingressPath }}{{ .Values.livenessProbe.path }}
               port: {{ .Values.livenessProbe.port }}
               scheme: HTTP
           readinessProbe:
@@ -40,7 +40,7 @@ spec:
             successThreshold: {{ .Values.readinessProbe.successThreshold }}
             timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
             httpGet:
-              path: {{ .Values.readinessProbe.path }}
+              path: {{ .Values.ingressPath }}{{ .Values.readinessProbe.path }}
               port: {{ .Values.readinessProbe.port }}
               scheme: HTTP
           ports:

@@ -128,10 +128,11 @@ tasks.withType( JavaExec ) {
 jib {
   from {
 //    image = "nexus-docker-public-hosted.ossim.io/omar-micro-runtime:latest"
-    image = 'docker://ossim-runtime-alpine'
+//    image = 'docker://ossim-runtime-alpine'
+    image = "nexus-docker-public-hosted.ossim.io/ossim-runtime-alpine:mando"
   }
   to {
-    image = "nexus-docker-public-hosted.ossim.io/omar-lite-wms${env.}"
+    image = "nexus-docker-public-hosted.ossim.io/omar-lite-wms-test"
     tags = [ 'latest' ]
   }
   extraDirectories {

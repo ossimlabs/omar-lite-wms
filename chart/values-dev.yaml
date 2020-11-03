@@ -116,3 +116,7 @@ resources:
   requests:
     cpu: 1000m
     memory: 1Gi
+
+
+envVars:
+  JAVA_OPTIONS: "-Dmicronaut.server.context-path=/omar-wms-test"    

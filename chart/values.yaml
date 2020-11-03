@@ -44,7 +44,7 @@ image:
   pullPolicy: null
 
 
-ingressPath: /omar-wms-test
+ingressPath: /omar-wms
 internalPort: 8080
 externalPort: 8080
 
