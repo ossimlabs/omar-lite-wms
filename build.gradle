@@ -132,7 +132,7 @@ jib {
     image = "nexus-docker-public-hosted.ossim.io/ossim-runtime-alpine:mando"
   }
   to {
-    image = "nexus-docker-public-hosted.ossim.io/omar-lite-wms-test"
+    image = "nexus-docker-public-hosted.ossim.io/omar-lite-wms"
     tags = [ 'latest' ]
   }
   extraDirectories {
