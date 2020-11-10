@@ -1,57 +1,67 @@
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Chart.Name }}
+  labels: {}
+  name: {{ .Values.appName }}
 spec:
-  replicas: {{ .Values.global.replicas }}
+  replicas: {{ .Values.replicas }}
   selector:
     matchLabels:
-      app: {{ .Chart.Name }}
+      app: {{ .Values.appName }}
   template:
     metadata:
       labels:
-        app: {{ .Chart.Name }}
+        app: {{ .Values.appName }}
     spec:
       containers:
-        - name: {{ .Chart.Name }}
-          image: {{ .Values.global.image.name }}
-          imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+        - name:  {{ .Values.appName }}
+          env:
+          {{- include "omar-lite-wms.envVars" . | indent 8 }}
+          {{- if .Values.imageSkaffoldOverride }}
+          image: {{ .Values.imageSkaffoldOverride }}
+          {{- else }}
+          image: "{{ .Values.global.dockerRepository }}/{{ .Values.image.name }}:{{ .Values.image.tag }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          livenessProbe:
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            successThreshold: {{ .Values.livenessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+            httpGet:
+              path: {{ .Values.ingressPath }}{{ .Values.livenessProbe.path }}
+              port: {{ .Values.livenessProbe.port }}
+              scheme: HTTP
+          readinessProbe:
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+            successThreshold: {{ .Values.readinessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+            httpGet:
+              path: {{ .Values.ingressPath }}{{ .Values.readinessProbe.path }}
+              port: {{ .Values.readinessProbe.port }}
+              scheme: HTTP
           ports:
-            - name: http
-              containerPort: 8080
+            - containerPort: {{ .Values.internalPort }}
+              protocol: TCP
           resources:
             limits:
-#              cpu: {{ .Values.global.resources.limits.cpu }}
-              memory: {{ .Values.global.resources.limits.memory }}
+              # cpu: {{ .Values.resources.limits.cpu }}
+              memory: {{ .Values.resources.limits.memory }}
             requests:
-#              cpu: {{ .Values.global.resources.requests.cpu }}
-              memory: {{ .Values.global.resources.requests.memory }}
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 5
-            timeoutSeconds: 3
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 5
-            timeoutSeconds: 3
-            failureThreshold: 10
+              # cpu: {{ .Values.resources.requests.cpu }}
+              memory: {{ .Values.resources.requests.memory }}              
           volumeMounts:
-            - mountPath: /data
-              name: ossim-data
-            # use the following for local deployment:
-#            - mountPath: /System/Volumes/Data/ossim
-#              name: data
+{{- include "omar-lite-wms.volumeMounts" . | indent 12 }}
+      dnsPolicy: ClusterFirst
+        {{- if .Values.global.useImagePullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.appName }}-pull-secret
+        {{- end }}
+      restartPolicy: Always
+      securityContext: {}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       volumes:
-        # use the following for local deployment:
- #       - name: ossim-data
- #         hostPath:
- #           path: /System/Volumes/Data/ossim
-        # use the following for remote deployment:
-        - name: ossim-data
-          persistentVolumeClaim:
-            claimName: {{ .Values.global.storage.pvc.name }}
+{{- include "omar-lite-wms.volumes" . | indent 8 }}

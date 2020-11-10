@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ .Values.appName }}"
+  labels:
+    app: "{{ .Values.appName }}"
+data:
+  application.yml: |- 
+    omar:
+      lite:
+        wms:
+          database:
+            name: {{ .Values.global.omarDb.name }}
+            username: {{ .Values.global.omarDb.user }}
+            password: {{ .Values.global.omarDb.password }}
+            host: {{ .Values.global.omarDb.host }}
+            port: {{ .Values.global.omarDb.port }}             
+

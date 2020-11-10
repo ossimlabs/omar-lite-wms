@@ -1,13 +1,15 @@
----
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Chart.Name }}
+  labels: {}
+  name: {{ .Values.appName }}-app
 spec:
   selector:
-    app: {{ .Chart.Name }}
-  type: ClusterIP
+    app: {{ .Values.appName }}
   ports:
-    - protocol: "TCP"
-      port: 8080
-      targetPort: 8080
+  - name: {{ .Values.internalPort }}-tcp
+    port: {{ .Values.externalPort }}
+    protocol: TCP
+    targetPort: {{ .Values.internalPort }}
+  sessionAffinity: None
+  type: ClusterIP

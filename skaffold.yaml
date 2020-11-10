@@ -1,18 +1,24 @@
-apiVersion: skaffold/v2beta6
+
+apiVersion: skaffold/v2beta7
 kind: Config
 metadata:
-  name: omar-lite-wms
+  name: omar-lite-wms-test
 build:
   artifacts:
-    - image: nexus-docker-public-hosted.ossim.io/omar-lite-wms
-      jib: {}
+  - image: nexus-docker-public-hosted.ossim.io/omar-lite-wms-test
+    jib: {}
   tagPolicy:
     sha256: {}
-
 deploy:
   helm:
     releases:
-      - name: omar-lite-wms
-        chartPath: chart
-        artifactOverrides:
-          image: nexus-docker-public-hosted.ossim.io/omar-lite-wms
+    - name: omar-lite-wms-test
+      chartPath: chart
+      valuesFiles:
+        - chart/values-dev.yaml      
+      # This override is used to pass skaffold's rebuilt image to
+      # imageName in the helm chart deployment.yaml.
+      # If you want to use an existing image rather than skaffold's
+      # comment this out and specify the image in the values-dev.yaml
+      artifactOverrides:
+        imageSkaffoldOverride: nexus-docker-public-hosted.ossim.io/omar-lite-wms-test 
