@@ -27,3 +27,9 @@ omar:
           password: postgres
           host: host.docker.internal
           port: 5432
+        styles:
+          blacksky:
+            filter: mission_id='BlackSky'
+            params:
+              bands: default
+              hist_op: none
