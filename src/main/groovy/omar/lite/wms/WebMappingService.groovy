@@ -62,50 +62,24 @@ class WebMappingService {
   PostGIS workspace
   NativeChipper chipper = new NativeChipper()
 
+  WmsStyleConfigurationProperties styleConfigurationProperties
+
+  WebMappingService( WmsStyleConfigurationProperties styleConfigurationProperties ) {
+    this.styleConfigurationProperties = styleConfigurationProperties
+  }
+
   StreamedFile getMap( GetMapRequest request ) {
     OutputStream ostream = new FastByteArrayOutputStream()
     long chipTime, queryTime, renderTime
 
     Map<String, String> opts = [
-        operation        : 'ortho',
-        cut_height       : request?.height?.toString(),
-        cut_width        : request?.width?.toString(),
-        cut_wms_bbox     : request?.bbox,
-        srs              : request?.srs,
+        operation: 'ortho',
+        cut_height: request?.height?.toString(),
+        cut_width: request?.width?.toString(),
+        cut_wms_bbox: request?.bbox,
+        srs: request?.srs,
         output_radiometry: 'U8',
     ]
-
-    String styles = request?.styles?.trim()
-
-    if ( styles ) {
-      Map<String, Object> json = ( new JsonSlurper() ).parseText( styles ) as Map<String, Object>
-
-      json?.each { String k, Object v ->
-        switch ( k ) {
-        case 'histCenterClip':
-          opts[ 'hist_center_clip' ] = v?.toString()
-          break
-        case 'histCenterTile':
-          opts[ 'hist_center' ] = v?.toString()
-          break
-        case 'histLinearNormClip':
-          opts[ 'hist_linear_norm_clip' ] = v?.toString()
-          break
-        case 'histOp':
-          opts[ 'hist_op' ] = v?.toString()
-          break
-        case 'nullPixelFlip':
-          opts[ 'null_pixel_flip' ] = v?.toString()
-          break
-
-        default:
-          opts[ k ] = v?.toString()
-        }
-      }
-    } else {
-      opts[ 'bands' ] = 'default'
-      opts[ 'hist_op' ] = 'auto-minmax'
-    }
 
     long queryStart = System.currentTimeMillis()
     int count = 0
@@ -128,16 +102,31 @@ class WebMappingService {
       filter = filter?.and( request?.filter )
     }
 
+    Map<String, String> overrides = [ : ]
+
     layer?.eachFeature(
-        fields: [ 'filename', 'entry_id', 'ground_geom' ],
+        fields: [ 'filename', 'entry_id', 'mission_id', 'ground_geom' ],
         filter: filter
     ) { Feature f ->
+      // Check for style overrides based on filter.   Stop a first hit
+      for ( def styleMap in styleConfigurationProperties?.styles ) {
+        if ( new Filter( styleMap.value[ 'filter' ] as String ).evaluate( f ) ) {
+          log.info "Using override ${styleMap.key}"
+          overrides = styleMap.value[ 'params' ] as Map<String, String>
+          break
+        }
+      }
+
       opts[ "image${ count }.file".toString() ] = f[ 'filename' ]?.toString()
       opts[ "image${ count }.entry".toString() ] = f[ 'entry_id' ]?.toString()
       ++count
 
       contained &= f?.geom?.covers( bbox?.geometry )
     }
+
+    String styles = request?.styles?.trim()
+
+    opts += parseStyles( styles, overrides )
 
     long queryStop = System.currentTimeMillis()
 
@@ -208,15 +197,55 @@ class WebMappingService {
     }
 
     log.info """${ [
-        query       : queryTime,
-        chip        : chipTime,
-        render      : renderTime,
-        contained   : contained,
+        query: queryTime,
+        chip: chipTime,
+        render: renderTime,
+        contained: contained,
         outputFormat: outputFormat
         /*, request: request */
     ] }"""
 
     new StreamedFile( new BufferedInputStream( ostream?.toInputStream() ), mediaType )
+  }
+
+  private Map<String, String> parseStyles( String styles, Map<String, String> overrides ) {
+    Map<String, String> opts = [
+        bands: 'default',
+        hist_op: 'auto-minmax'
+    ]
+
+    if ( styles ) {
+      Map<String, Object> json = ( new JsonSlurper() ).parseText( styles ) as Map<String, Object>
+
+      json?.each { String k, Object v ->
+        switch ( k ) {
+        case 'histCenterClip':
+          opts[ 'hist_center_clip' ] = v?.toString()
+          break
+        case 'histCenterTile':
+          opts[ 'hist_center' ] = v?.toString()
+          break
+        case 'histLinearNormClip':
+          opts[ 'hist_linear_norm_clip' ] = v?.toString()
+          break
+        case 'histOp':
+          opts[ 'hist_op' ] = v?.toString()
+          break
+        case 'nullPixelFlip':
+          opts[ 'null_pixel_flip' ] = v?.toString()
+          break
+
+        default:
+          opts[ k ] = v?.toString()
+        }
+      }
+    }
+
+    overrides?.each { k, v ->
+      opts[ k.replace( '-', '_' ) ] = v
+    }
+
+    return opts
   }
 
   @EventListener
@@ -236,5 +265,6 @@ class WebMappingService {
 
     ImageIO.useCache = false
     log.info dbParams?.toString()
+    log.info "styles: ${ styleConfigurationProperties }"
   }
 }
