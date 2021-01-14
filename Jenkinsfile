@@ -41,17 +41,15 @@ podTemplate(
       mountPath: '/var/run/docker.sock'
     ),
   ]
-)
-{
+) {
   node(POD_LABEL){
     stage("Checkout branch") {
       scmVars = checkout(scm)
 
       GIT_BRANCH_NAME = scmVars.GIT_BRANCH
       BRANCH_NAME = "${sh(returnStdout: true, script: "echo ${GIT_BRANCH_NAME} | awk -F'/' '{print \$2}'").trim()}"
-
-      CHART_APP_VERSION = "${sh(returnStdout: true, script: "grep -Po \"(?<=appVersion: ).*\" chart/Chart.yaml")}"
-      GRADLE_APP_VERSION = "${sh(returnStdout: true, script: "grep -Po \"(?<=buildVersion=).*\" gradle.properties")}"
+      CHART_APP_VERSION = "${sh(returnStdout: true, script: "grep -Po \"(?<=appVersion: ).*\" chart/Chart.yaml").trim()}"
+      GRADLE_APP_VERSION = "${sh(returnStdout: true, script: "grep -Po \"(?<=buildVersion=).*\" gradle.properties").trim()}"
 
       GIT_TAG_NAME = "omar-lite-wms-${GRADLE_APP_VERSION}"
       ARTIFACT_NAME = "ArtifactName"
