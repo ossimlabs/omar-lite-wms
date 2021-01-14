@@ -50,25 +50,17 @@ podTemplate(
       GIT_BRANCH_NAME = scmVars.GIT_BRANCH
       BRANCH_NAME = "${sh(returnStdout: true, script: "echo ${GIT_BRANCH_NAME} | awk -F'/' '{print \$2}'").trim()}"
 
-      sh """
-          touch buildVersion.txt
-          grep buildVersion gradle.properties | cut -d "=" -f2 > "buildVersion.txt"
-      """
-
-      preVERSION = readFile "buildVersion.txt"
-      VERSION = preVERSION.substring(0, preVERSION.indexOf('\n'))
-
-      GIT_TAG_NAME = "omar-lite-wms-${VERSION}"
-      ARTIFACT_NAME = "ArtifactName"
-
       CHART_APP_VERSION = "${sh(returnStdout: true, script: "grep -Po \"(?<=appVersion: ).*\" chart/Chart.yaml")}"
       GRADLE_APP_VERSION = "${sh(returnStdout: true, script: "grep -Po \"(?<=buildVersion=).*\" gradle.properties")}"
 
+      GIT_TAG_NAME = "omar-lite-wms-${GRADLE_APP_VERSION}"
+      ARTIFACT_NAME = "ArtifactName"
+
       script {
         if (BRANCH_NAME != 'master') {
-          buildName "${VERSION} - ${BRANCH_NAME}-SNAPSHOT"
+          buildName "${GRADLE_APP_VERSION} - ${BRANCH_NAME}-SNAPSHOT"
         } else {
-          buildName "${VERSION} - ${BRANCH_NAME}"
+          buildName "${GRADLE_APP_VERSION} - ${BRANCH_NAME}"
         }
       }
     }
