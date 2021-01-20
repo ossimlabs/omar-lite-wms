@@ -21,6 +21,6 @@ below:
 
 ### Master
 
-Each commit to master will result in a newly published docker image of the version specified in `Chart.yaml`:`appVersion`. 
+Each commit to master will result in a newly published docker image of the version specified in `gradle.properties`:`buildVersion`. 
 Docker images cannot be overriden in our docker registry (that is, nexus), so each commit will need to be accompanied 
 with a bumped version, or else a docker image will not be pushed.
