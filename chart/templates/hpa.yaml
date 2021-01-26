@@ -1,0 +1,16 @@
+{{- if (pluck "createHpa" .Values .Values.global | first) }}
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+    annotations: 
+        field.cattle.io/displayName: {{ .Values.appName }}
+    name: {{ .Values.appName }}
+spec:
+    maxReplicas: {{ .Values.maxReplicas }}
+    minReplicas: {{ .Values.minReplicas }}
+    scaleTargetRef:
+      apiVersion: extensions/v1beta1
+      kind: Deployment
+      name: {{ .Values.appName }}
+    targetCPUUtilizationPercentage: {{ .Values.targetCpu }}
+{{- end }}
