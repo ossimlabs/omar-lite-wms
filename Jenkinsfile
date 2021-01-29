@@ -33,7 +33,7 @@ podTemplate(
         envVars: [
             envVar(key: 'HOME', value: '/root')
         ]
-    )
+    ),
     containerTemplate(
       image: "${DOCKER_REGISTRY_DOWNLOAD_URL}/omar-builder:jdk11",
       name: 'builder',
