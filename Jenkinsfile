@@ -34,6 +34,12 @@ podTemplate(
             envVar(key: 'HOME', value: '/root')
         ]
     )
+    containerTemplate(
+      image: "${DOCKER_REGISTRY_DOWNLOAD_URL}/omar-builder:jdk11",
+      name: 'builder',
+      command: 'cat',
+      ttyEnabled: true
+    ),
   ],
   volumes: [
     hostPathVolume(
@@ -74,14 +80,10 @@ podTemplate(
     DOCKER_IMAGE_PATH = "${DOCKER_REGISTRY_PRIVATE_UPLOAD_URL}/omar-lite-wms"
 
     stage("Build Docker Image") {
-      container('docker'){
-        withGradle {
-          script {
+      container('builder'){
             sh """
               ./gradlew jDB
             """
-          }
-        }
       }
     }
     
