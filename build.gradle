@@ -1,8 +1,8 @@
 plugins {
   id "groovy"
   id "application"
-  id "com.google.cloud.tools.jib" version "2.6.0"
-  id "com.github.ben-manes.versions" version "0.33.0"
+  id "com.google.cloud.tools.jib" version "2.7.1"
+  id "com.github.ben-manes.versions" version "0.36.0"
 }
 
 version projectVersion

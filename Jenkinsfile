@@ -78,8 +78,7 @@ podTemplate(
         withGradle {
           script {
             sh """
-              apk add gradle
-              gradle jDB
+              ./gradlew jDB
             """
           }
         }
