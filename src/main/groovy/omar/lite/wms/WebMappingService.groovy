@@ -125,8 +125,11 @@ class WebMappingService {
     }
 
     String styles = request?.styles?.trim()
+    Map<String,String> userStyles = parseStyles( styles, overrides )
 
-    opts += parseStyles( styles, overrides )
+    // For Kevin,  always use what's in application.yml
+    userStyles.removeAll { opts.containsKey( it.key ) }
+    opts += userStyles
 
     long queryStop = System.currentTimeMillis()
 
