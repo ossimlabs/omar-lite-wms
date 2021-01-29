@@ -88,12 +88,12 @@ podTemplate(
     }
     
     stage("Build Docker Image") {
-      withCredentials([[$class: 'UsernamePasswordMultiBinding',
+      container('docker'){
+        withCredentials([[$class: 'UsernamePasswordMultiBinding',
                 credentialsId: 'nexusCredentials',
                 usernameVariable: 'MAVEN_REPO_USERNAME',
                 passwordVariable: 'MAVEN_REPO_PASSWORD']])
-      {
-        container('docker'){
+        {
           withGradle {
             script {
               sh """
