@@ -90,15 +90,11 @@ podTemplate(
     stage("Build Docker Image") {
       container('docker'){
         withDockerRegistry(credentialsId: 'dockerCredentials', url: "https://${DOCKER_REGISTRY_DOWNLOAD_URL}") {
-          withGradle {
-            script {
-              sh """
-              apk add --update openjdk11
-              export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
-              ./gradlew jDB
-              """
-            }
-          }
+          sh """
+          apk add --update openjdk11
+          export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
+          ./gradlew jDB
+          """
         }
       }  
     }
