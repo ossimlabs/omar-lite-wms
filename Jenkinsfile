@@ -88,17 +88,23 @@ podTemplate(
     }
     
     stage("Build Docker Image") {
-      container('docker'){
-        withGradle {
-          script {
-            sh """
-            apk add --update openjdk11
-            export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
-            ./gradlew jDB
-            """
+      withCredentials([[$class: 'UsernamePasswordMultiBinding',
+                credentialsId: 'nexusCredentials',
+                usernameVariable: 'MAVEN_REPO_USERNAME',
+                passwordVariable: 'MAVEN_REPO_PASSWORD']])
+      {
+        container('docker'){
+          withGradle {
+            script {
+              sh """
+              apk add --update openjdk11
+              export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
+              ./gradlew jDB
+              """
+            }
           }
         }
-      }
+      }  
     }
     
     stage("Push Docker Image") {
