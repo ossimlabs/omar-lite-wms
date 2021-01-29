@@ -82,8 +82,7 @@ podTemplate(
     stage('Build') {
       container('builder') {
         sh """
-        ./gradlew assemble \
-            -PossimMavenProxy=${MAVEN_DOWNLOAD_URL}
+        ./gradlew assemble
         """
         archiveArtifacts "apps/*/build/libs/*.jar"
       }
