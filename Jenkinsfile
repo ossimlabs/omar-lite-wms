@@ -92,6 +92,8 @@ podTemplate(
         withGradle {
           script {
             sh """
+            apk add --update openjdk11
+            export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
             ./gradlew jDB
             """
           }
