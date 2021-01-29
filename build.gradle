@@ -128,7 +128,7 @@ tasks.withType( JavaExec ) {
 jib {
   from {
 //    image = 'docker://ossim-runtime-alpine'
-    image = "nexus-docker-public-hosted.ossim.io/ossim-runtime-alpine:grogu"
+    image = "nexus-docker-private-group.ossim.io/ossim-alpine-jdk11-runtime:1.2"
   }
   to {
     image = "nexus-docker-private-hosted.ossim.io/omar-lite-wms"
