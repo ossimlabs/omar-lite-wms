@@ -3,7 +3,7 @@ properties([
         string(name: 'DOCKER_REGISTRY_DOWNLOAD_URL', defaultValue: 'nexus-docker-private-group.ossim.io', description: 'Repository of docker images')
     ]),
     pipelineTriggers([
-            [$class: "GitHubPushTrigger"]
+        [$class: "GitHubPushTrigger"]
     ]),
     [$class: 'GithubProjectProperty', displayName: '', projectUrlStr: 'https://github.com/ossimlabs/omar-lite-wms'],
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '3', daysToKeepStr: '', numToKeepStr: '20')),
@@ -109,19 +109,17 @@ podTemplate(
         script {
           sh 'helm package chart'
         }
-      }
-    }
 
-    stage('Upload Chart'){
-      container('helm') {
-        withCredentials([usernameColonPassword(credentialsId: 'helmCredentials', variable: 'HELM_CREDENTIALS')]) {
-          script {
-            sh 'apk add curl'
-            sh 'curl -u ${HELM_CREDENTIALS} ${HELM_UPLOAD_URL} --upload-file *.tgz -v'
+        stage('Upload Chart'){
+          container('helm') {
+            withCredentials([usernameColonPassword(credentialsId: 'helmCredentials', variable: 'HELM_CREDENTIALS')]) {
+              script {
+                sh 'apk add curl'
+                sh 'curl -u ${HELM_CREDENTIALS} ${HELM_UPLOAD_URL} --upload-file *.tgz -v'
+              }
+            }
           }
         }
-      }
-    }
 
     stage('Tag Repo') {
       when (BRANCH_NAME == 'master') {
@@ -144,6 +142,8 @@ podTemplate(
                   -m "Build: ${env.BUILD_NUMBER}"
                 git push -v origin "${GIT_TAG_NAME}"
               """
+                }
+              }
             }
           }
         }
