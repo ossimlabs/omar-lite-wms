@@ -89,11 +89,7 @@ podTemplate(
     
     stage("Build Docker Image") {
       container('docker'){
-        withCredentials([[$class: 'UsernamePasswordMultiBinding',
-                credentialsId: 'nexusCredentials',
-                usernameVariable: 'MAVEN_REPO_USERNAME',
-                passwordVariable: 'MAVEN_REPO_PASSWORD']])
-        {
+        withDockerRegistry(credentialsId: 'dockerCredentials', url: "https://${DOCKER_REGISTRY_DOWNLOAD_URL}") {
           withGradle {
             script {
               sh """
