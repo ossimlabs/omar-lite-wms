@@ -84,7 +84,6 @@ podTemplate(
         sh """
         ./gradlew assemble
         """
-        archiveArtifacts "apps/*/build/libs/*.jar"
       }
     }
     
