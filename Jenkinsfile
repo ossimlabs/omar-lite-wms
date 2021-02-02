@@ -26,6 +26,12 @@ podTemplate(
       ttyEnabled: true
     ),
     containerTemplate(
+      image: "${DOCKER_REGISTRY_DOWNLOAD_URL}/omar-builder:jdk11",
+      name: 'builder',
+      command: 'cat',
+      ttyEnabled: true
+    ),
+    containerTemplate(
         name: 'git',
         image: 'alpine/git:latest',
         ttyEnabled: true,
@@ -73,17 +79,24 @@ podTemplate(
       
     DOCKER_IMAGE_PATH = "${DOCKER_REGISTRY_PRIVATE_UPLOAD_URL}/omar-lite-wms"
 
+    stage('Build') {
+      container('builder') {
+        sh """
+        ./gradlew assemble
+        """
+      }
+    }
+    
     stage("Build Docker Image") {
       container('docker'){
-        withGradle {
-          script {
-            sh """
-              apk add gradle
-              gradle jDB
-            """
-          }
+        withDockerRegistry(credentialsId: 'dockerCredentials', url: "https://${DOCKER_REGISTRY_DOWNLOAD_URL}") {
+          sh """
+          apk add --update openjdk11
+          export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
+          ./gradlew jDB
+          """
         }
-      }
+      }  
     }
     
     stage("Push Docker Image") {
