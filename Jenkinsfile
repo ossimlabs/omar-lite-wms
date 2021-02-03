@@ -93,15 +93,13 @@ node(POD_LABEL){
     }
 
     stage("Load Variables") {
-        withCredentials([string(credentialsId: 'o2-artifact-project', variable: 'o2ArtifactProject')]) {
-            step ([$class: "CopyArtifact",
-                projectName: o2ArtifactProject,
-                filter: "common-variables.groovy",
-                flatten: true])
-        }
+      step([$class     : "CopyArtifact",
+            projectName: "gegd-dgcs-jenkins-artifacts",
+            filter     : "common-variables.groovy",
+            flatten    : true])
+    }
         load "common-variables.groovy"
         DOCKER_IMAGE_PATH = "${DOCKER_REGISTRY_PRIVATE_UPLOAD_URL}/${APP_NAME}"
-    }
 
 //     CYPRESS TESTS COMING SOON
 //     stage ("Run Cypress Test") {
@@ -150,7 +148,6 @@ node(POD_LABEL){
             """
         }
     }
-
 
     stage('Docker Build') {
         container('docker') {
