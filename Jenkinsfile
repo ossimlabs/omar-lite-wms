@@ -155,6 +155,7 @@ node(POD_LABEL){
         container('docker') {
             withDockerRegistry(credentialsId: 'dockerCredentials', url: "https://${DOCKER_REGISTRY_DOWNLOAD_URL}") {
                 sh """
+                    apk add --update openjdk11
                     export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
                     ./gradlew jDB
                 """
@@ -166,8 +167,8 @@ node(POD_LABEL){
         container('docker') {
             withDockerRegistry(credentialsId: 'dockerCredentials', url: "https://${DOCKER_REGISTRY_PRIVATE_UPLOAD_URL}") {
             sh """
-                docker tag "${DOCKER_REGISTRY_PRIVATE_UPLOAD_URL}/${APP_NAME}:${TAG_NAME}" "${DOCKER_REGISTRY_PRIVATE_UPLOAD_URL}/${APP_NAME}:${TAG_NAME}"
-                docker push "${DOCKER_REGISTRY_PRIVATE_UPLOAD_URL}/${APP_NAME}:${TAG_NAME}"
+                docker tag ${DOCKER_IMAGE_PATH} ${DOCKER_IMAGE_PATH}:${TAG_NAME}
+                docker push ${DOCKER_IMAGE_PATH}:${TAG_NAME}
             """
             }
         }
