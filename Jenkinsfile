@@ -1,4 +1,3 @@
-
 properties([
     parameters([
         string(name: 'PROJECT_URL', defaultValue: 'https://github.com/ossimlabs/omar-lite-wms', description: 'The project github URL'),
