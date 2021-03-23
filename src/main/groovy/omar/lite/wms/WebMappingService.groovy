@@ -204,8 +204,8 @@ class WebMappingService {
         chip: chipTime,
         render: renderTime,
         contained: contained,
-        outputFormat: outputFormat
-        /*, request: request */
+        outputFormat: outputFormat,
+        request: request
     ] }"""
 
     new StreamedFile( new BufferedInputStream( ostream?.toInputStream() ), mediaType )
