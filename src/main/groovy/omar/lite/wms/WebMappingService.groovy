@@ -21,6 +21,7 @@ import io.micronaut.scheduling.annotation.Async
 import joms.oms.Init
 import joms.oms.NativeChipper
 import org.geotools.referencing.util.CRSUtilities
+import org.geotools.util.factory.Hints
 import org.ossim.oms.util.TransparentFilter
 
 import org.apache.commons.io.output.ByteArrayOutputStream as FastByteArrayOutputStream
@@ -98,6 +99,8 @@ class WebMappingService {
     Bounds bbox = new Bounds( coords[ 0 ], coords[ 1 ], coords[ 2 ], coords[ 3 ], proj )?.reproject( geom?.proj )
     Filter filter = Filter.intersects( geom?.name, bbox?.polygon )
 
+    log.info "bbox=${bbox}"
+
     if ( request?.filter ) {
       filter = filter?.and( request?.filter )
     }
@@ -123,6 +126,8 @@ class WebMappingService {
 
       contained &= f?.geom?.covers( bbox?.geometry )
     }
+
+    log.info "count=${count}, contained=${contained}"
 
     String styles = request?.styles?.trim()
     Map<String,String> userStyles = parseStyles( styles, overrides )
@@ -265,6 +270,8 @@ class WebMappingService {
         host: host,
         port: port?.toInteger()
     )
+
+    Hints.putSystemDefault(Hints.FORCE_LONGITUDE_FIRST_AXIS_ORDER, Boolean.TRUE)
 
     ImageIO.useCache = false
     log.info dbParams?.toString()
