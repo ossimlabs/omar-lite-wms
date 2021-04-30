@@ -1,7 +1,9 @@
 package omar.lite.wms
 
 import groovy.transform.CompileStatic
+import io.micronaut.http.HttpHeaders
 import io.micronaut.http.HttpRequest
+import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.Controller
 import io.micronaut.http.annotation.Get
@@ -11,9 +13,14 @@ import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.annotation.ExecuteOn
 import io.reactivex.Single
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
 @CompileStatic
 @Controller( "/wms" )
 class WmsController {
+  Logger log = LoggerFactory.getLogger( WebMappingService )
+
   WebMappingService webMappingService
 
   WmsController( WebMappingService webMappingService ) {
@@ -22,13 +29,24 @@ class WmsController {
 
   @ExecuteOn( TaskExecutors.IO )
   @Get( uri = "/", produces = [ MediaType.IMAGE_JPEG, MediaType.IMAGE_GIF, MediaType.IMAGE_PNG ] )
-  Single<StreamedFile> index( HttpRequest request ) {
+  HttpResponse<StreamedFile> index( HttpRequest request ) {
+    HttpResponse<StreamedFile>  httpResponse
+    boolean compress = request.headers.getAll(HttpHeaders.ACCEPT_ENCODING).any { it.contains("gzip")}
+
+    //compress = false
+    log.info "compress: ${compress}"
+
     //StreamedFile index( HttpRequest request ) {
     GetMapRequest getMapRequest = new GetMapRequest( request.parameters )
-    StreamedFile getMapResponse = webMappingService.getMap( getMapRequest )
+    StreamedFile getMapResponse = webMappingService.getMap( getMapRequest, compress )
 
-    Single.just( getMapResponse )
-    //getMapResponse
+    httpResponse = HttpResponse.ok().body( getMapResponse )
+    
+    if ( compress ) {
+      httpResponse = httpResponse.header('Content-Encoding', 'gzip')
+    }
+  
+    httpResponse
   }
 
   @ExecuteOn( TaskExecutors.IO )
