@@ -38,12 +38,15 @@ import java.awt.geom.AffineTransform
 import java.awt.image.BufferedImage
 import java.awt.image.ColorModel
 import java.awt.image.WritableRaster
+import java.util.zip.GZIPOutputStream
 
 @CompileStatic
 @Singleton
 class WebMappingService {
   Logger log = LoggerFactory.getLogger( WebMappingService )
   TransparentFilter transparentFilter = new TransparentFilter()
+
+  static final MediaType gzipMediaType = new MediaType( "application/gzip" ) 
 
   @Value( '${omar.lite.wms.database.name}' )
   String database
@@ -69,7 +72,7 @@ class WebMappingService {
     this.styleConfigurationProperties = styleConfigurationProperties
   }
 
-  StreamedFile getMap( GetMapRequest request ) {
+  StreamedFile getMap( GetMapRequest request, boolean compress=false ) {
     OutputStream ostream = new FastByteArrayOutputStream()
     long chipTime, queryTime, renderTime
 
@@ -200,7 +203,9 @@ class WebMappingService {
 
       mediaType = MediaType.IMAGE_PNG_TYPE
       outputFormat = 'png'
-      ImageIO.write( image, outputFormat, new BufferedOutputStream( ostream ) )
+
+      ImageIO.write( image, outputFormat,  new BufferedOutputStream( ostream ) )
+
       log.info( "Returning blank tile: ${ opts }" )
     }
 
@@ -213,7 +218,9 @@ class WebMappingService {
         request: request
     ] }"""
 
-    new StreamedFile( new BufferedInputStream( ostream?.toInputStream() ), mediaType )
+    new StreamedFile(  new BufferedInputStream( 
+      ( compress ) ? createZipStream( ostream?.toInputStream() ) : ostream?.toInputStream() 
+    ), mediaType )
   }
 
   private Map<String, String> parseStyles( String styles, Map<String, String> overrides ) {
@@ -276,5 +283,15 @@ class WebMappingService {
     ImageIO.useCache = false
     log.info dbParams?.toString()
     log.info "styles: ${ styleConfigurationProperties }"
+  }
+
+  InputStream createZipStream(InputStream istream) {
+    FastByteArrayOutputStream ostream = new FastByteArrayOutputStream()
+    GZIPOutputStream zipStream = new GZIPOutputStream(ostream)
+
+    zipStream << istream
+    zipStream.flush()
+    zipStream.close()
+    ostream?.toInputStream()
   }
 }
