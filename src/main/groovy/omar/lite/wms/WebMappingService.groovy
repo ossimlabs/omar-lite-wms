@@ -74,7 +74,7 @@ class WebMappingService {
 
   StreamedFile getMap( GetMapRequest request, boolean compress=false ) {
     OutputStream ostream = new FastByteArrayOutputStream()
-    long chipTime, queryTime, renderTime
+    long chipTime, queryTime, renderTime    
 
     Map<String, String> opts = [
         operation: 'ortho',

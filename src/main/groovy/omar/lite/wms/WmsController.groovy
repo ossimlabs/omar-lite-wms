@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory
 @CompileStatic
 @Controller( "/wms" )
 class WmsController {
-  Logger log = LoggerFactory.getLogger( WebMappingService )
+  Logger log = LoggerFactory.getLogger( WmsController )
 
   WebMappingService webMappingService
 
@@ -30,6 +30,9 @@ class WmsController {
   @ExecuteOn( TaskExecutors.IO )
   @Get( uri = "/", produces = [ MediaType.IMAGE_JPEG, MediaType.IMAGE_GIF, MediaType.IMAGE_PNG ] )
   HttpResponse<StreamedFile> index( HttpRequest request ) {
+
+    log.info request?.toString()
+    
     HttpResponse<StreamedFile>  httpResponse
     boolean compress = request.headers.getAll(HttpHeaders.ACCEPT_ENCODING).any { it.contains("gzip")}
 
