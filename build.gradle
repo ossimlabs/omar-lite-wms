@@ -1,7 +1,7 @@
 plugins {
   id "groovy"
   id "application"
-  id "com.google.cloud.tools.jib" version "2.8.0"
+  id "com.google.cloud.tools.jib" version "3.0.0"
   id "com.github.ben-manes.versions" version "0.38.0"
 }
 
@@ -74,7 +74,7 @@ dependencies {
   compileOnly( "io.micronaut.openapi:micronaut-openapi" )
   implementation( "io.swagger.core.v3:swagger-annotations" )
 
-  implementation( "io.micronaut.kubernetes:micronaut-kubernetes-discovery-client:2.0.0" )
+  implementation( "io.micronaut.kubernetes:micronaut-kubernetes-discovery-client:2.3.1" )
   compileOnly( platform( "io.micronaut:micronaut-bom:$micronautVersion" ) )
   compileOnly( "io.micronaut:micronaut-inject-groovy" )
   implementation( platform( "io.micronaut:micronaut-bom:$micronautVersion" ) )
