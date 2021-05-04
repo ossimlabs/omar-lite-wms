@@ -185,21 +185,23 @@ class WebMappingService {
       }
 
       if ( outputFormat == 'png' && request.transparent ) {
-        if ( image.sampleModel.numBands == 3 ) {
           BufferedImage image1 = new BufferedImage( image.width, image.height, BufferedImage.TYPE_INT_ARGB )
           Graphics2D graphics2D = image1.createGraphics()
 
           graphics2D.drawRenderedImage( image, new AffineTransform() )
           graphics2D.dispose()
-          image = TransparentFilter.fixTransparency( transparentFilter, image1 )
-        } else if ( image.sampleModel.numBands == 1  ) {
-          BufferedImage image1 = new BufferedImage( image.width, image.height, BufferedImage.TYPE_BYTE_GRAY )
-          Graphics2D graphics2D = image1.createGraphics()
+          image1 = TransparentFilter.fixTransparency( transparentFilter, image1 )
 
-          graphics2D.drawRenderedImage( image, new AffineTransform() )
-          graphics2D.dispose()
-          //image = TransparentFilter.fixTransparency( transparentFilter, image1 )
-        }
+          if ( image.sampleModel.numBands == 1 ) {
+            BufferedImage image2 = new BufferedImage( image.width, image.height, BufferedImage.TYPE_BYTE_GRAY )
+          
+            graphics2D = image2.createGraphics()
+            graphics2D.drawRenderedImage( image1, new AffineTransform() )
+            graphics2D.dispose() 
+            image = image2           
+          } else {
+            image = image1
+          }
       }
 
       ImageIO.write( image, outputFormat, new BufferedOutputStream( ostream ) )
