@@ -34,9 +34,14 @@ import javax.media.jai.PlanarImage
 import java.awt.AlphaComposite
 import java.awt.Color
 import java.awt.Graphics2D
+import java.awt.Point
+import java.awt.color.ColorSpace
 import java.awt.geom.AffineTransform
 import java.awt.image.BufferedImage
 import java.awt.image.ColorModel
+import java.awt.image.ComponentColorModel
+import java.awt.image.DataBuffer
+import java.awt.image.DataBufferByte
 import java.awt.image.WritableRaster
 import java.util.zip.GZIPOutputStream
 
@@ -177,6 +182,9 @@ class WebMappingService {
       ColorModel colorModel = PlanarImage.createColorModel( raster?.sampleModel )
       BufferedImage image = new BufferedImage( colorModel, raster, colorModel?.isAlphaPremultiplied(), [ : ] as Hashtable )
 
+      log.info colorModel as String
+      log.info image as String
+
       if ( false ) {
         Graphics2D g2d = image.createGraphics()
         g2d.color = Color.red
@@ -185,22 +193,15 @@ class WebMappingService {
       }
 
       if ( outputFormat == 'png' && request.transparent ) {
-          BufferedImage image1 = new BufferedImage( image.width, image.height, BufferedImage.TYPE_INT_ARGB )
-          Graphics2D graphics2D = image1.createGraphics()
-
-          graphics2D.drawRenderedImage( image, new AffineTransform() )
-          graphics2D.dispose()
-          image1 = TransparentFilter.fixTransparency( transparentFilter, image1 )
-
           if ( image.sampleModel.numBands == 1 ) {
-            BufferedImage image2 = new BufferedImage( image.width, image.height, BufferedImage.TYPE_BYTE_GRAY )
-          
-            graphics2D = image2.createGraphics()
-            graphics2D.drawRenderedImage( image1, new AffineTransform() )
-            graphics2D.dispose() 
-            image = image2           
+            image = createTransparentGrayScale(image)
           } else {
-            image = image1
+            BufferedImage image1 = new BufferedImage( image.width, image.height, BufferedImage.TYPE_INT_ARGB )
+            Graphics2D graphics2D = image1.createGraphics()
+
+            graphics2D.drawRenderedImage( image, new AffineTransform() )
+            graphics2D.dispose()
+            image = TransparentFilter.fixTransparency( transparentFilter, image )
           }
       }
 
@@ -304,5 +305,34 @@ class WebMappingService {
     zipStream.flush()
     zipStream.close()
     ostream?.toInputStream()
+  }
+
+  BufferedImage createTransparentGrayScale(BufferedImage image) {
+    byte[] gray = image.data.getDataElements( 0, 0, image.width, image.height, null) as byte[]
+    byte[] alpha = gray.collect { (it) == 0 ? 0x00 : 0xFF }
+
+    def colorModel = new ComponentColorModel(
+        ColorSpace.getInstance(ColorSpace.CS_GRAY),
+        true, false, ComponentColorModel.TRANSLUCENT, DataBuffer.TYPE_BYTE
+    )
+
+    int[] bandOffsets = new int[] {1, 0}; // gray + alpha
+    int bands = bandOffsets.length; // 2, that is
+
+    def buffer = new DataBufferByte(image.width * image.height * bands);
+
+    WritableRaster raster = WritableRaster.createInterleavedRaster(
+        buffer, image.width, image.height, image.width * bands, bands, bandOffsets, new Point(0, 0))
+
+    for ( def y in (0..<image.height) ) {     
+        for ( def x in (0..<image.width) ) {
+            def i = y * image.width + x
+            raster.setPixel(x, y, [gray[i], alpha[i]] as int[])
+        }        
+    }
+    
+    def newImage = new BufferedImage(colorModel, raster, false, null)
+
+    return newImage    
   }
 }
