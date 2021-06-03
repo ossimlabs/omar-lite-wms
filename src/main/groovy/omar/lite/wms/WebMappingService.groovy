@@ -173,7 +173,12 @@ class WebMappingService {
 
     if ( count ) {
       long chipStart = System.currentTimeMillis()
-      WritableRaster raster = chipper?.run( opts )
+      WritableRaster raster
+      
+      synchronized ( this ) {
+        raster = chipper?.run( opts )
+      }
+
       long chipStop = System.currentTimeMillis()
 
       chipTime = chipStop - chipStart
