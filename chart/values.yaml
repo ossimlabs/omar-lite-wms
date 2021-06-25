@@ -38,7 +38,7 @@ global:
 
 image:
   name: omar-lite-wms
-  tag: 2021.Q1.R1.2724.sgm
+  tag: 2.13
   pullPolicy: null
 
 
