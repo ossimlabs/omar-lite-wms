@@ -23,7 +23,7 @@ global:
     password: null
     port: null
 
-  createIngress: true
+  createIngress: false
   useTls: false
   useTLSClientAuth: false
   sslCertSecretName: null
@@ -38,11 +38,11 @@ global:
 
 image:
   name: omar-lite-wms
-  tag: null
+  tag: 2021.Q1.R1.2724.sgm
   pullPolicy: null
 
 
-ingressPath: /omar-wms
+path: /omar-wms
 internalPort: 8080
 externalPort: 8080
 
